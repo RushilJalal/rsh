@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <wait.h>
 
 #define READ_LINE_BUFFER_SIZE 1024
 #define RSH_TOKEN_BUFFER_SIZE 64
@@ -25,7 +26,7 @@ void rsh_loop(void)
         printf("> ");
         line = rsh_read_line();
         args = split_line(line);
-        status = lsh_execute(args);
+        status = rsh_execute(args);
 
         free(line);
         free(args);
@@ -136,14 +137,37 @@ char **rsh_split_line(char *line)
     return tokens;
 }
 
-int rsh_launch(char **args){
+int rsh_launch(char **args)
+{
     pid_t pid, wpid;
     int status;
 
+    // clones the calling process
     pid = fork();
 
-    if(pid == 0){
-        //child
-        
+    if (pid == 0)
+    {
+        // child
+        if (execvp(args[0], args) == -1)
+        {
+            perror("rsh");
+        }
+        exit(EXIT_FAILURE);
     }
+    else if (pid < 0)
+    {
+        // error in forking
+        perror("rsh");
+    }
+    else
+    {
+        // parent process
+        do
+        {
+            // wait for the child process to terminate using waitpid
+            // loop continues until child process exits or is killed using a signal
+            wpid = waitpid(pid, &status, WUNTRACED);
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+    return 1;
 }
