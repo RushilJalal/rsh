@@ -50,7 +50,7 @@ void rsh_loop(void)
 
     do
     {
-        printf("> ");
+        printf("rsh> ");
         line = rsh_read_line();
         args = rsh_split_line(line);
         status = rsh_execute(args);
