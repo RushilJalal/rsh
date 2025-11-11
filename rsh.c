@@ -50,7 +50,16 @@ void rsh_loop(void)
 
     do
     {
-        printf("rsh> ");
+        char *cwd = getcwd(NULL, 0);
+        if (cwd)
+        {
+            printf("rsh:%s> ", cwd);
+            free(cwd);
+        }
+        else
+        {
+            printf("rsh> ");
+        }
         line = rsh_read_line();
         args = rsh_split_line(line);
         status = rsh_execute(args);
